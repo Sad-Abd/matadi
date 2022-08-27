@@ -2,7 +2,7 @@ from functools import wraps
 from copy import deepcopy
 
 from .. import Variable
-from ..math import det, cof, trace, gradient
+from ..math import det, cof, trace, gradient, sqrt
 
 
 def isochoric_volumetric_split(fun):
@@ -12,9 +12,10 @@ def isochoric_volumetric_split(fun):
 
     @wraps(fun)
     def apply_iso(*args, **kwargs):
-        F = args[0]
-        J = det(F)
-        F_iso = J ** (-1 / 3) * F
+        C = args[0]
+        I3 = det(C)
+        J = sqrt(I3)
+        C_iso = I3 ** (-1 / 3) * C
 
         fun_args = args[1:]
         fun_kwargs = deepcopy(kwargs)
@@ -22,7 +23,7 @@ def isochoric_volumetric_split(fun):
         if "bulk" in kwargs.keys():
             _ = fun_kwargs.pop("bulk")
 
-        W = fun(F_iso, *fun_args, **fun_kwargs)
+        W = fun(C_iso, *fun_args, **fun_kwargs)
 
         if "bulk" in kwargs.keys():
             W += volumetric(J, kwargs["bulk"])

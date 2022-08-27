@@ -15,10 +15,11 @@ class NeoHookeOgdenRoxburgh(MaterialTensorGeneral):
 
             # split `x` into the deformation gradient and the state variable
             F, Wmaxn = x[0], x[-1]
+            C = F.T @ F
 
             # isochoric and volumetric parts of the hyperelastic
             # strain energy function
-            W = neo_hooke(F, C10)
+            W = neo_hooke(C, C10)
             U = volumetric(det(F), bulk)
 
             # pseudo-elastic softening function

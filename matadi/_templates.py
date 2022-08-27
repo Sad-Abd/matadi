@@ -1,7 +1,8 @@
 import numpy as np
+from functools import partial
 
 from . import Material, MaterialTensor, Variable
-from .math import det, horzcat, vertcat, zeros, gradient as grad, trace, eye, Function
+from .math import det, horzcat, vertcat, zeros, gradient as grad, trace, eye, Function, asvoigt, astensor
 
 
 class TwoFieldVariation:
@@ -116,7 +117,11 @@ class MaterialHyperelastic:
         self.hessian_vector_product = self.W.hessian_vector_product
 
     def _fun_wrapper(self, x, **kwargs):
-        return self.fun(x[0], **kwargs)
+        F = x[0]
+        C = F.T @ F
+        C6 = Variable("C", 6, 1)
+        fun = partial(self.fun, **kwargs)(astensor(C6))
+        return Function("W", [C6], [fun])(asvoigt(C))
 
 
 class MaterialHyperelasticPlaneStrain:
@@ -135,7 +140,10 @@ class MaterialHyperelasticPlaneStrain:
     def _fun_wrapper(self, x, **kwargs):
         F = horzcat(vertcat(x[0], zeros(1, 2)), zeros(3, 1))
         F[2, 2] = 1  # fixed thickness ratio `h / H = 1`
-        return self.fun(F, **kwargs)
+        C = F.T @ F
+        C6 = Variable("C", 6, 1)
+        fun = partial(self.fun, **kwargs)(astensor(C6))
+        return Function("W", [C6], [fun])(asvoigt(C))
 
 
 class MaterialHyperelasticPlaneStressIncompressible(MaterialHyperelasticPlaneStrain):
@@ -145,7 +153,10 @@ class MaterialHyperelasticPlaneStressIncompressible(MaterialHyperelasticPlaneStr
     def _fun_wrapper(self, x, **kwargs):
         F = horzcat(vertcat(x[0], zeros(1, 2)), zeros(3, 1))
         F[2, 2] = 1 / det(x[0])  # thickness ratio `h / H = 1 / (a / A)`
-        return self.fun(F, **kwargs)
+        C = F.T @ F
+        C6 = Variable("C", 6, 1)
+        fun = partial(self.fun, **kwargs)(astensor(C6))
+        return Function("W", [C6], [fun])(asvoigt(C))
 
 
 class MaterialHyperelasticPlaneStressLinearElastic(MaterialHyperelasticPlaneStrain):

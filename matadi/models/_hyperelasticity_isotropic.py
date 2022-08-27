@@ -1,5 +1,5 @@
 from ._helpers import isochoric_volumetric_split
-from ..math import dot, det, transpose, trace, eigvals, sum1, log, sqrt, eye, sym
+from ..math import trace, eigvals, sum1, log, sqrt, eye, sym
 
 
 def linear_elastic(F, mu, lmbda):
@@ -7,39 +7,32 @@ def linear_elastic(F, mu, lmbda):
     return mu * trace(strain @ strain) + lmbda / 2 * trace(strain) ** 2
 
 
-def saint_venant_kirchhoff(F, mu, lmbda):
-    C = dot(transpose(F), F)
+def saint_venant_kirchhoff(C, mu, lmbda):
     I1 = trace(C) / 2 - 3 / 2
     I2 = trace(C @ C) / 4 - trace(C) / 2 + 3 / 4
     return mu * I2 + lmbda * I1 ** 2 / 2
 
 
 @isochoric_volumetric_split
-def neo_hooke(F, C10):
-    C = transpose(F) @ F
-    I1 = trace(C)
-    return C10 * (I1 - 3)
+def neo_hooke(C, C10):
+    return C10 * (trace(C) - 3)
 
 
 @isochoric_volumetric_split
-def mooney_rivlin(F, C10, C01):
-    C = transpose(F) @ F
+def mooney_rivlin(C, C10, C01):
     I1 = trace(C)
     I2 = (trace(C) ** 2 - trace(C @ C)) / 2
     return C10 * (I1 - 3) + C01 * (I2 - 3)
 
 
 @isochoric_volumetric_split
-def yeoh(F, C10, C20, C30):
-    J = det(F)
-    C = transpose(F) @ F
-    I1 = J ** (-2 / 3) * trace(C)
+def yeoh(C, C10, C20, C30):
+    I1 = trace(C)
     return C10 * (I1 - 3) + C20 * (I1 - 3) ** 2 + C30 * (I1 - 3) ** 3
 
 
 @isochoric_volumetric_split
-def third_order_deformation(F, C10, C01, C11, C20, C30):
-    C = transpose(F) @ F
+def third_order_deformation(C, C10, C01, C11, C20, C30):
     I1 = trace(C)
     I2 = (trace(C) ** 2 - trace(C @ C)) / 2
     return (
@@ -52,8 +45,7 @@ def third_order_deformation(F, C10, C01, C11, C20, C30):
 
 
 @isochoric_volumetric_split
-def ogden(F, mu, alpha):
-    C = transpose(F) @ F
+def ogden(C, mu, alpha):
     wC = eigvals(C)
 
     out = 0
@@ -65,8 +57,7 @@ def ogden(F, mu, alpha):
 
 
 @isochoric_volumetric_split
-def arruda_boyce(F, C1, limit):
-    C = transpose(F) @ F
+def arruda_boyce(C, C1, limit):
     I1 = trace(C)
 
     alpha = [1 / 2, 1 / 20, 11 / 1050, 19 / 7000, 519 / 673750]
@@ -81,8 +72,7 @@ def arruda_boyce(F, C1, limit):
 
 
 @isochoric_volumetric_split
-def extended_tube(F, Gc, delta, Ge, beta):
-    C = transpose(F) @ F
+def extended_tube(C, Gc, delta, Ge, beta):
     D = trace(C)
     wC = eigvals(C)
     g = (1 - delta ** 2) * (D - 3) / (1 - delta ** 2 * (D - 3))
@@ -92,8 +82,7 @@ def extended_tube(F, Gc, delta, Ge, beta):
 
 
 @isochoric_volumetric_split
-def van_der_waals(F, mu, limit, a, beta):
-    C = transpose(F) @ F
+def van_der_waals(C, mu, limit, a, beta):
     I1 = trace(C)
     I2 = (trace(C) ** 2 - trace(C @ C)) / 2
     I = (1 - beta) * I1 + beta * I2
